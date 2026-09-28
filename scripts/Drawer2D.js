@@ -6,14 +6,15 @@ export class Drawer2D {
     this.points = points.map(([x, y]) => ({x, y}));
     this.edges = edges;
     this.angle = 0;
-    this.zoom = 2.2;
+    // Масштаб отображения, координаты исходных точек не изменяются.
+    this.zoom = 24;
     this.offset = {x: 0, y: 0};
   }
 
   reset() {
     this.points = this.source.map(p => ({...p}));
     this.angle = 0;
-    this.zoom = 2.2;
+    this.zoom = 24;
     this.offset = {x: 0, y: 0};
     this.draw();
   }
@@ -66,4 +67,3 @@ export class Drawer2D {
     }
   }
 }
-

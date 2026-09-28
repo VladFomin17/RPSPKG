@@ -109,10 +109,7 @@ export const faceLoops2D = [
     [64, 65, 66, 68]
 ];
 
-export const holeLoops2D = [
-    [7, 8, 13],
-    [8, 9, 14]
-];
+export const holeLoops2D = [];
 
 export function extrudeCharacter(depth = 4) {
     const base = points2D.slice(1).map(([x, y]) => [x, y, depth / 2]);

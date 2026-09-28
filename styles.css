@@ -26,13 +26,36 @@ body {
     align-items: center;
 }
 
+.projection-grid {
+    width: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.projection-card {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 6px;
+    justify-items: center;
+}
+
+.projection-card h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+}
+
 h1 {
     margin: 0;
     font-size: 22px;
 }
 
 canvas {
-    width: auto;
+    width: 100%;
     height: auto;
     max-width: 100%;
     max-height: 100%;

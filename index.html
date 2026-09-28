@@ -1,26 +1,31 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Компьютерная графика — лабораторная работа</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Компьютерная графика — лабораторная работа</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app">
-    <h1 id="title">Лабораторная работа</h1>
-    <canvas id="canvas" width="1000" height="700"></canvas>
-    <section class="controls">
-      <button id="reset">Сбросить</button>
-      <button id="rotateLeft">Повернуть −</button>
-      <button id="rotateRight">Повернуть +</button>
-      <button id="scaleDown">Масштаб −</button>
-      <button id="scaleUp">Масштаб +</button>
-      <button id="moveLeft">←</button><button id="moveRight">→</button>
-      <button id="moveUp">↑</button><button id="moveDown">↓</button>
+<main class="app">
+    <h1 id="title">Лабораторная работа №3</h1>
+    <section class="projection-grid">
+        <div class="projection-card"><h2>Спереди — XY</h2><canvas id="frontCanvas" width="480" height="320"></canvas></div>
+        <div class="projection-card"><h2>Сверху — XZ</h2><canvas id="topCanvas" width="480" height="320"></canvas></div>
+        <div class="projection-card"><h2>Сбоку — YZ</h2><canvas id="sideCanvas" width="480" height="320"></canvas></div>
     </section>
-  </main>
-  <script type="module" src="index.js"></script>
+    <section class="controls">
+        <button id="reset">Сбросить</button>
+        <button id="rotateLeft">Повернуть −</button>
+        <button id="rotateRight">Повернуть +</button>
+        <button id="scaleDown">Масштаб −</button>
+        <button id="scaleUp">Масштаб +</button>
+        <button id="moveLeft">←</button>
+        <button id="moveRight">→</button>
+        <button id="moveUp">↑</button>
+        <button id="moveDown">↓</button>
+    </section>
+</main>
+<script type="module" src="index.js"></script>
 </body>
 </html>
-

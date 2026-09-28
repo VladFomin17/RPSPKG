@@ -1,8 +1,8 @@
 import { Matrix4 } from './Matrix4.js';
 
 export class ZBufferDrawer {
-  constructor(canvas, model) { this.canvas=canvas;this.ctx=canvas.getContext('2d');this.source=model.points.map(([x,y,z])=>({x,y,z}));this.edges=model.edges;this.faces=model.faces;this.points=this.source.map(p=>({...p}));this.angle=0;this.zoom=1.4;this.offset={x:0,y:0}; }
-  reset(){this.points=this.source.map(p=>({...p}));this.angle=0;this.zoom=1.4;this.offset={x:0,y:0};this.draw();}
+  constructor(canvas, model, options = {}) { this.canvas=canvas;this.ctx=canvas.getContext('2d');this.source=model.points.map(([x,y,z])=>({x,y,z}));this.edges=model.edges;this.faces=model.faces;this.points=this.source.map(p=>({...p}));this.initialZoom=options.initialZoom ?? 1.4;this.angle=0;this.zoom=this.initialZoom;this.offset={x:0,y:0}; }
+  reset(){this.points=this.source.map(p=>({...p}));this.angle=0;this.zoom=this.initialZoom;this.offset={x:0,y:0};this.draw();}
   rotateY(a){this.angle+=a;this.draw();} scale(v){this.zoom*=v;this.draw();} move(x,y){this.offset.x+=x;this.offset.y+=y;this.draw();}
   transformed(){const m=Matrix4.multiply(Matrix4.translation(this.offset.x,this.offset.y,0),Matrix4.multiply(Matrix4.rotateY(this.angle),Matrix4.scale(this.zoom,this.zoom,this.zoom)));return Matrix4.transform(this.points,m);}
   project(p){return {x:this.canvas.width/2+p.x+0.5*p.z,y:this.canvas.height/2-p.y-0.3*p.z,z:p.z};}

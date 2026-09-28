@@ -7,9 +7,11 @@ export class ZBufferDrawer {
         this.source = model.points.map(([x, y, z]) => ({x, y, z}));
         this.edges = model.edges;
         this.faces = model.faces;
+        this.holes = model.holes || [];
         this.points = this.source.map(point => ({...point}));
         this.initialZoom = options.initialZoom ?? 1.4;
         this.angle = 0;
+        this.angleX = 0;
         this.zoom = this.initialZoom;
         this.offset = {x: 0, y: 0};
     }
@@ -17,6 +19,7 @@ export class ZBufferDrawer {
     reset() {
         this.points = this.source.map(point => ({...point}));
         this.angle = 0;
+        this.angleX = 0;
         this.zoom = this.initialZoom;
         this.offset = {x: 0, y: 0};
         this.draw();
@@ -24,6 +27,11 @@ export class ZBufferDrawer {
 
     rotateY(angle) {
         this.angle += angle;
+        this.draw();
+    }
+
+    rotateX(angle) {
+        this.angleX += angle;
         this.draw();
     }
 
@@ -42,7 +50,7 @@ export class ZBufferDrawer {
         const matrix = Matrix4.multiply(
             Matrix4.translation(this.offset.x, this.offset.y, 0),
             Matrix4.multiply(
-                Matrix4.rotateY(this.angle),
+                Matrix4.multiply(Matrix4.rotateY(this.angle), Matrix4.rotateX(this.angleX)),
                 Matrix4.scale(this.zoom, this.zoom, this.zoom)
             )
         );
@@ -109,7 +117,22 @@ export class ZBufferDrawer {
             image.data[i * 4 + 3] = 255;
         }
         this.ctx.putImageData(image, 0, 0);
+        this.drawHoles(points);
         this.drawVisibleEdges(points, buffer.z);
+    }
+
+    drawHoles(points) {
+        this.ctx.fillStyle = '#ffffff';
+        for (const hole of this.holes) {
+            this.ctx.beginPath();
+            hole.forEach((index, position) => {
+                const point = points[index];
+                if (position === 0) this.ctx.moveTo(point.x, point.y);
+                else this.ctx.lineTo(point.x, point.y);
+            });
+            this.ctx.closePath();
+            this.ctx.fill();
+        }
     }
 
     drawVisibleEdges(points, depthBuffer) {

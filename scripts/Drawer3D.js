@@ -58,15 +58,24 @@ export class Drawer3D {
     }
 
     project(point) {
-        if (this.projection === 'top') return {x: point.x, y: point.z};
-        if (this.projection === 'side') return {x: point.z, y: point.y};
-        if (this.projection === 'cabinet') return {x: point.x + 0.5 * point.z, y: point.y + 0.3 * point.z};
+        if (this.projection === 'top') {
+            return {x: point.x, y: point.z};
+        }
+        if (this.projection === 'side') {
+            return {x: point.z, y: point.y};
+        }
+        if (this.projection === 'cabinet') {
+            return {x: point.x + 0.5 * point.z, y: point.y + 0.3 * point.z};
+        }
         return {x: point.x, y: point.y};
     }
 
     screen(point) {
         const projected = this.project(point);
-        return {x: this.canvas.width / 2 + projected.x, y: this.canvas.height / 2 - projected.y};
+        return {
+            x: this.canvas.width / 2 + projected.x,
+            y: this.canvas.height / 2 - projected.y
+        };
     }
 
     draw() {
@@ -80,6 +89,7 @@ export class Drawer3D {
         ctx.moveTo(canvas.width / 2, 0);
         ctx.lineTo(canvas.width / 2, canvas.height);
         ctx.stroke();
+
         const points = this.transformed();
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;

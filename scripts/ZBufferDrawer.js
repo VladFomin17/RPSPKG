@@ -102,7 +102,7 @@ export class ZBufferDrawer {
 
         const image = this.ctx.createImageData(this.canvas.width, this.canvas.height);
         for (let i = 0; i < buffer.color.length; i++) {
-            const color = buffer.color[i] ? [37, 99, 235] : [255, 255, 255];
+            const color = buffer.color[i] ? [220, 38, 38] : [255, 255, 255];
             image.data[i * 4] = color[0];
             image.data[i * 4 + 1] = color[1];
             image.data[i * 4 + 2] = color[2];
@@ -113,7 +113,7 @@ export class ZBufferDrawer {
     }
 
     drawVisibleEdges(points, depthBuffer) {
-        this.ctx.strokeStyle = '#1d4ed8';
+        this.ctx.strokeStyle = '#111827';
         this.ctx.lineWidth = 2;
 
         for (const [a, b] of this.edges) {

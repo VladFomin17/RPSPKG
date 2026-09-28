@@ -94,7 +94,8 @@ export const faceLoops2D = [
     [7, 8, 14, 13],
     [9, 8, 14, 15],
     [9, 10, 11, 15, 67],
-    [12, 13, 14, 15, 67],
+    [12, 13, 14],
+    [14, 15, 67],
     [16, 17, 18, 19, 20],
     [21, 22, 23, 24, 25],
     [26, 27, 28, 29],
@@ -109,8 +110,8 @@ export const faceLoops2D = [
 ];
 
 export const holeLoops2D = [
-    [12, 13, 14],
-    [15, 67, 14]
+    [7, 8, 13],
+    [8, 9, 14]
 ];
 
 export function extrudeCharacter(depth = 4) {

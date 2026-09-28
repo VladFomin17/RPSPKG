@@ -20,6 +20,8 @@ const actions = {
     reset: () => drawers.forEach(drawer => drawer.reset()),
     rotateLeft: () => drawers.forEach(drawer => drawer.rotateY(-Math.PI / 18)),
     rotateRight: () => drawers.forEach(drawer => drawer.rotateY(Math.PI / 18)),
+    rotateUp: () => drawers.forEach(drawer => drawer.rotateX(-Math.PI / 18)),
+    rotateDown: () => drawers.forEach(drawer => drawer.rotateX(Math.PI / 18)),
     scaleDown: () => drawers.forEach(drawer => drawer.scale(0.9)),
     scaleUp: () => drawers.forEach(drawer => drawer.scale(1.1)),
     moveLeft: () => drawers.forEach(drawer => drawer.move(-10, 0)),

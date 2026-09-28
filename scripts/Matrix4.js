@@ -4,4 +4,5 @@ export class Matrix4 {
   static translation(x,y,z) { return [[1,0,0,x],[0,1,0,y],[0,0,1,z],[0,0,0,1]]; }
   static scale(x,y,z) { return [[x,0,0,0],[0,y,0,0],[0,0,z,0],[0,0,0,1]]; }
   static rotateY(a) { const c=Math.cos(a),s=Math.sin(a); return [[c,0,s,0],[0,1,0,0],[-s,0,c,0],[0,0,0,1]]; }
+  static rotateX(a) { const c=Math.cos(a),s=Math.sin(a); return [[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]]; }
 }

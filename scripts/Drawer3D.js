@@ -11,6 +11,7 @@ export class Drawer3D {
         this.initialZoom = options.initialZoom ?? 2.1;
         this.color = options.color || '#1d4ed8';
         this.angle = 0;
+        this.angleX = 0;
         this.zoom = this.initialZoom;
         this.offset = {x: 0, y: 0};
     }
@@ -18,6 +19,7 @@ export class Drawer3D {
     reset() {
         this.points = this.source.map(point => ({...point}));
         this.angle = 0;
+        this.angleX = 0;
         this.zoom = this.initialZoom;
         this.offset = {x: 0, y: 0};
         this.draw();
@@ -25,6 +27,11 @@ export class Drawer3D {
 
     rotateY(angle) {
         this.angle += angle;
+        this.draw();
+    }
+
+    rotateX(angle) {
+        this.angleX += angle;
         this.draw();
     }
 
@@ -43,7 +50,7 @@ export class Drawer3D {
         const matrix = Matrix4.multiply(
             Matrix4.translation(this.offset.x, this.offset.y, 0),
             Matrix4.multiply(
-                Matrix4.rotateY(this.angle),
+                Matrix4.multiply(Matrix4.rotateY(this.angle), Matrix4.rotateX(this.angleX)),
                 Matrix4.scale(this.zoom, this.zoom, this.zoom)
             )
         );

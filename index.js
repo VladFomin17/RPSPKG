@@ -17,10 +17,10 @@ const actions = {
     rotateDown: () => drawer.rotateX(Math.PI / 18),
     scaleDown: () => drawer.scale(0.9),
     scaleUp: () => drawer.scale(1.1),
-    moveLeft: () => drawer.move(-10, 0),
-    moveRight: () => drawer.move(10, 0),
-    moveUp: () => drawer.move(0, 10),
-    moveDown: () => drawer.move(0, -10)
+    moveLeft: () => drawer.move(-5, 0),
+    moveRight: () => drawer.move(5, 0),
+    moveUp: () => drawer.move(0, 5),
+    moveDown: () => drawer.move(0, -5)
 };
 
 for (const [id, action] of Object.entries(actions)) {

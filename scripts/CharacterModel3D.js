@@ -111,7 +111,14 @@ export const holeLoops2D = [];
 
 export function extrudeCharacter(depth = 4) {
     const base = points2D.slice(1).map(([x, y]) => [x, y, depth / 2]);
-    const points = [...base, ...base.map(([x, y]) => [x, y, -depth / 2])];
+    const back = base.map(([x, y], index) => {
+        const pointNumber = index + 1;
+        const z = pointNumber >= 16 && pointNumber <= 43
+            ? depth / 2
+            : -depth / 2;
+        return [x, y, z];
+    });
+    const points = [...base, ...back];
     const count = base.length;
     const edges = [];
     const faces = [];

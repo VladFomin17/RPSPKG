@@ -13,7 +13,7 @@ export class ZBufferDrawer {
         this.angle = 0;
         this.angleX = 0;
         this.zoom = this.initialZoom;
-        this.offset = {x: 0, y: 0};
+        this.offset = {x: 0, y: 0, z: 0};
     }
 
     reset() {
@@ -21,7 +21,7 @@ export class ZBufferDrawer {
         this.angle = 0;
         this.angleX = 0;
         this.zoom = this.initialZoom;
-        this.offset = {x: 0, y: 0};
+        this.offset = {x: 0, y: 0, z: 0};
         this.draw();
     }
 
@@ -46,9 +46,14 @@ export class ZBufferDrawer {
         this.draw();
     }
 
+    moveZ(z) {
+        this.offset.z += z;
+        this.draw();
+    }
+
     transformed() {
         const matrix = Matrix4.multiply(
-            Matrix4.translation(this.offset.x, this.offset.y, 0),
+            Matrix4.translation(this.offset.x, this.offset.y, this.offset.z),
             Matrix4.multiply(
                 Matrix4.multiply(Matrix4.rotateY(this.angle), Matrix4.rotateX(this.angleX)),
                 Matrix4.scale(this.zoom, this.zoom, this.zoom)

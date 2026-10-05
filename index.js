@@ -20,7 +20,9 @@ const actions = {
     moveLeft: () => drawer.move(-5, 0),
     moveRight: () => drawer.move(5, 0),
     moveUp: () => drawer.move(0, 5),
-    moveDown: () => drawer.move(0, -5)
+    moveDown: () => drawer.move(0, -5),
+    moveZBack: () => drawer.moveZ(-5),
+    moveZForward: () => drawer.moveZ(5)
 };
 
 for (const [id, action] of Object.entries(actions)) {

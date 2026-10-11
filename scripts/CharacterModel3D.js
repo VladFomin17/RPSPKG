@@ -109,6 +109,10 @@ export const faceLoops2D = [
 
 export const holeLoops2D = [];
 
+// У этих вершин передняя и задняя грани ручки существуют,
+// но вертикальные соединяющие рёбра по оси Z не рисуются.
+const zDisconnectedPoints = new Set([6, 7, 8, 9, 10, 13, 15]);
+
 export function extrudeCharacter(depth = 4) {
     const base = points2D.slice(1).map(([x, y]) => [x, y, depth / 2]);
     const back = base.map(([x, y], index) => {
@@ -130,7 +134,10 @@ export function extrudeCharacter(depth = 4) {
     }
 
     for (let i = 0; i < count; i++) {
-        edges.push([i, i + count]);
+        const pointNumber = i + 1;
+        if (!zDisconnectedPoints.has(pointNumber)) {
+            edges.push([i, i + count]);
+        }
     }
 
     for (const loop of faceLoops2D) {

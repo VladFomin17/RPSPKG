@@ -130,7 +130,13 @@ export function extrudeCharacter(depth = 4) {
     for (const [a, b] of edges2D) {
         edges.push([a - 1, b - 1]);
         edges.push([a - 1 + count, b - 1 + count]);
-        faces.push([a - 1, b - 1, b - 1 + count, a - 1 + count]);
+
+        const hasZDisconnectedPoint =
+            zDisconnectedPoints.has(a) || zDisconnectedPoints.has(b);
+
+        if (!hasZDisconnectedPoint) {
+            faces.push([a - 1, b - 1, b - 1 + count, a - 1 + count]);
+        }
     }
 
     for (let i = 0; i < count; i++) {

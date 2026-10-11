@@ -37,4 +37,10 @@ export class Matrix4 {
         const sin = Math.sin(angle);
         return [[1, 0, 0, 0], [0, cos, -sin, 0], [0, sin, cos, 0], [0, 0, 0, 1]];
     }
+
+    static rotateZ(angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return [[cos, -sin, 0, 0], [sin, cos, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    }
 }

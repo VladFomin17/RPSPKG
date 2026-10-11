@@ -93,6 +93,8 @@ export const faceLoops2D = [
     [5, 6, 7, 13, 12],
     [7, 8, 14, 13],
     [9, 8, 14, 15],
+    [15, 11, 67],
+    [15, 9, 67],
     [9, 10, 11, 15, 67],
     [16, 17, 18, 19, 20],
     [21, 22, 23, 24, 25],
@@ -111,7 +113,7 @@ export const holeLoops2D = [];
 
 // У этих вершин передняя и задняя грани ручки существуют,
 // но вертикальные соединяющие рёбра по оси Z не рисуются.
-const zDisconnectedPoints = new Set([6, 7, 8, 9, 10, 13, 15]);
+const zDisconnectedPoints = new Set([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 67]);
 
 export function extrudeCharacter(depth = 4) {
     const base = points2D.slice(1).map(([x, y]) => [x, y, depth / 2]);

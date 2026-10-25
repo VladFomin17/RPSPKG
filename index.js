@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {createView, addStudioLights, addGround, frameCamera} from './shared/scene.js';
-import {characterGeometry, characterMesh} from './shared/character.js';
+import {characterGeometry, characterMesh, characterOutline} from './shared/character.js';
 
 const view = createView(document.querySelector('#viewport'));
 const {scene, camera, controls} = view;
@@ -9,6 +9,7 @@ const flatGeometry = characterGeometry();
 const smoothGeometry = characterGeometry(undefined, {smooth: true});
 
 const character = characterMesh({geometry: flatGeometry});
+character.add(characterOutline());
 // Тень персонаж отбрасывает, но не принимает: его грани плоские и двусторонние,
 // а карта теней на таких поверхностях даёт самозатенение (акан).
 character.castShadow = true;

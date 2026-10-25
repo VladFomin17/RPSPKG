@@ -94,13 +94,12 @@ export function characterGeometry(mesh = extrudeCharacter(4)) {
 }
 
 /**
- * Контурные линии рисунка (edges2D) на передней и задней плоскостях.
- * В лабораторной №4 это были чёрные линии поверх заливки — здесь они
- * возвращаются как отдельный объект, поэтому видны глаза, рот и все детали.
+ * Контурные линии рисунка (edges2D) только на передней плоскости: рисунок
+ * односторонний, поэтому лицо и детали видны спереди и отсутствуют сзади.
+ * В лабораторной №4 это были чёрные линии поверх заливки.
  */
 export function characterOutline(depth = 4, options = {}) {
     const zFront = depth / 2 + 0.012;
-    const zBack = -depth / 2 - 0.012;
     const positions = [];
 
     for (const [a, b] of edges2D) {
@@ -108,7 +107,6 @@ export function characterOutline(depth = 4, options = {}) {
         const [bx, by] = points2D[b];
 
         positions.push(ax, ay, zFront, bx, by, zFront);
-        positions.push(ax, ay, zBack, bx, by, zBack);
     }
 
     const geometry = new THREE.BufferGeometry();

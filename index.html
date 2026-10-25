@@ -31,14 +31,31 @@
 
     <div class="hint-bar">WASD — бег · мышь — камера · Enter — старт</div>
 
+    <div id="countdown" class="countdown hidden">3</div>
+
     <div id="overlay" class="overlay">
       <div class="card">
         <p class="eyebrow">Лабораторная работа №8</p>
         <h1 id="overlayTitle">Собери 10 кристаллов</h1>
         <p id="overlayText">
           WASD — движение, перетаскивание мышью — камера.
-          Красные сферы догоняют: касание — поражение.
+          После отсчёта красные сферы начнут догонять: касание — поражение.
         </p>
+
+        <div class="settings">
+          <label class="setting">
+            <span>Противники</span>
+            <input id="enemyCount" type="range" min="1" max="5" step="1" value="3" />
+            <output data-for="enemyCount">3</output>
+          </label>
+
+          <label class="setting">
+            <span>Победных очков</span>
+            <input id="targetScore" type="range" min="5" max="50" step="1" value="10" />
+            <output data-for="targetScore">10</output>
+          </label>
+        </div>
+
         <button id="startButton" type="button">Играть</button>
       </div>
     </div>

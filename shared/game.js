@@ -5,11 +5,16 @@ import {Walker} from './animation.js';
 
 const ARENA_RADIUS = 30;
 const PLAYER_SPEED = 16;
-const PLAYER_SCALE = 0.38;
+const PLAYER_SCALE = 0.45;
 const ENEMY_SPEED = 10.5;
 const CRYSTAL_COUNT = 10;
-const CRYSTAL_TARGET = 10;
+const MAX_ENEMIES = 5;
+const DEFAULT_ENEMIES = 3;
+const MIN_TARGET = 5;
+const MAX_TARGET = 50;
+const DEFAULT_TARGET = 10;
 const GAME_TIME = 60;
+const COUNTDOWN = 3;
 
 const PLAYER_BASE_Y = 9; // локальная высота ступней у фигуры из лабы №4
 
@@ -31,16 +36,32 @@ export class Game {
         this.keys = new Set();
         this.velocity = new THREE.Vector3();
 
+        this.enemyCount = DEFAULT_ENEMIES;
+        this.target = DEFAULT_TARGET;
+        this.countdown = 0;
+
         this.buildArena();
         this.buildPlayer();
         this.buildCrystals();
         this.buildEnemies();
         this.bindInput();
 
-        this.camera.position.set(0, 16, 26);
-        this.camera.lookAt(0, 4, 0);
+        this.camera.position.set(0, 48, 64);
+        this.camera.lookAt(0, 1, 0);
 
         this.view.onFrame(dt => this.update(dt));
+    }
+
+    /** Настройки партии: сколько противников и сколько очков нужно для победы. */
+    configure({enemyCount = this.enemyCount, target = this.target} = {}) {
+        this.enemyCount = Math.min(MAX_ENEMIES, Math.max(1, Math.round(enemyCount)));
+        this.target = Math.min(MAX_TARGET, Math.max(MIN_TARGET, Math.round(target)));
+
+        for (const [index, enemy] of this.enemies.entries()) {
+            enemy.visible = index < this.enemyCount;
+        }
+
+        return this;
     }
 
     buildArena() {
@@ -123,12 +144,13 @@ export class Game {
 
         this.enemies = [];
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < MAX_ENEMIES; i++) {
             const enemy = new THREE.Mesh(geometry, material);
             enemy.castShadow = true;
             enemy.userData.phase = Math.random() * Math.PI * 2;
             const point = this.randomArenaPoint(18);
             enemy.position.set(point.x, 1.8, point.z);
+            enemy.visible = i < this.enemyCount;
             this.scene.add(enemy);
             this.enemies.push(enemy);
         }
@@ -182,6 +204,7 @@ export class Game {
         this.timeLeft = GAME_TIME;
         this.elapsed = 0;
         this.yaw = 0;
+        this.countdown = COUNTDOWN;
         this.velocity.set(0, 0, 0);
 
         this.player.position.set(0, 0, 0);
@@ -192,7 +215,8 @@ export class Game {
             crystal.position.y = 1.9;
         }
 
-        for (const enemy of this.enemies) {
+        for (const [index, enemy] of this.enemies.entries()) {
+            enemy.visible = index < this.enemyCount;
             const point = this.randomArenaPoint(18);
             enemy.position.set(point.x, 1.8, point.z);
         }
@@ -215,14 +239,27 @@ export class Game {
         this.elapsed += dt;
 
         if (this.state === 'play') {
-            this.timeLeft -= dt;
+            const counting = this.countdown > 0;
+
+            if (counting) {
+                this.countdown = Math.max(0, this.countdown - dt);
+
+                if (this.countdown < 0.001) {
+                    this.countdown = 0;
+                }
+            } else {
+                this.timeLeft -= dt;
+            }
 
             this.updatePlayer(dt);
             this.updateCrystals(dt);
-            this.updateEnemies(dt);
 
-            if (this.timeLeft <= 0) {
-                this.finish('lose');
+            if (!counting) {
+                this.updateEnemies(dt);
+
+                if (this.timeLeft <= 0) {
+                    this.finish('lose');
+                }
             }
         } else {
             this.yaw += dt * 0.12;
@@ -233,7 +270,9 @@ export class Game {
 
         this.onHud({
             score: this.score,
+            target: this.target,
             time: Math.max(0, this.timeLeft),
+            countdown: this.countdown,
             state: this.state
         });
     }
@@ -297,7 +336,7 @@ export class Game {
                 crystal.position.copy(this.randomArenaPoint(4));
                 crystal.position.y = 1.9;
 
-                if (this.score >= CRYSTAL_TARGET) {
+                if (this.score >= this.target) {
                     this.finish('win');
                     return;
                 }
@@ -324,11 +363,12 @@ export class Game {
     }
 
     updateCamera(dt) {
-        const target = new THREE.Vector3(this.player.position.x, 3.4, this.player.position.z);
+        // Камера смотрит на центр арены, поэтому поле видно целиком.
+        const target = new THREE.Vector3(0, 1, 0);
         const offset = new THREE.Vector3(
-            Math.sin(this.yaw) * 20,
-            13,
-            Math.cos(this.yaw) * 20
+            Math.sin(this.yaw) * 64,
+            48,
+            Math.cos(this.yaw) * 64
         );
 
         const desired = target.clone().add(offset);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {createView, addStudioLights, addGround, frameCamera} from './shared/scene.js';
-import {characterGeometry} from './shared/character.js';
+import {characterGeometry, characterOutline} from './shared/character.js';
 import {checkerTexture, brickTexture, tilesTexture, noiseTexture} from './shared/textures.js';
 
 const view = createView(document.querySelector('#viewport'));
@@ -30,6 +30,7 @@ const material = new THREE.MeshStandardMaterial({
 });
 
 const character = new THREE.Mesh(characterGeometry(), material);
+character.add(characterOutline(4, {color: 0x05070c, opacity: 1}));
 character.castShadow = true;
 scene.add(character);
 

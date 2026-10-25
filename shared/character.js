@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {extrudeCharacter} from '../scripts/CharacterModel3D.js';
+import {extrudeCharacter, points2D, edges2D} from '../scripts/CharacterModel3D.js';
 
 /** Площадь треугольника меньше порога — грань вырождена (в модели такие есть). */
 function isDegenerate(points, a, b, c) {
@@ -91,4 +91,35 @@ export function characterGeometry(mesh = extrudeCharacter(4)) {
     applyBoxUVs(geometry);
     geometry.computeVertexNormals();
     return geometry;
+}
+
+/**
+ * Контурные линии рисунка (edges2D) на передней и задней плоскостях.
+ * В лабораторной №4 это были чёрные линии поверх заливки — здесь они
+ * возвращаются как отдельный объект, поэтому видны глаза, рот и все детали.
+ */
+export function characterOutline(depth = 4, options = {}) {
+    const zFront = depth / 2 + 0.012;
+    const zBack = -depth / 2 - 0.012;
+    const positions = [];
+
+    for (const [a, b] of edges2D) {
+        const [ax, ay] = points2D[a];
+        const [bx, by] = points2D[b];
+
+        positions.push(ax, ay, zFront, bx, by, zFront);
+        positions.push(ax, ay, zBack, bx, by, zBack);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+    return new THREE.LineSegments(
+        geometry,
+        new THREE.LineBasicMaterial({
+            color: options.color ?? 0x111827,
+            transparent: true,
+            opacity: options.opacity ?? 0.9
+        })
+    );
 }

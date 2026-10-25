@@ -180,6 +180,20 @@ export class Game {
             this.keys.delete(event.code);
         });
 
+        // Если окно потеряло фокус, keyup может не прийти — сбрасываем клавиши,
+        // иначе персонаж «убегает» сам.
+        window.addEventListener('blur', () => {
+            this.keys.clear();
+        });
+
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    this.keys.clear();
+                }
+            });
+        }
+
         const canvas = this.renderer.domElement;
         let dragging = false;
 
@@ -206,6 +220,9 @@ export class Game {
         this.yaw = 0;
         this.countdown = COUNTDOWN;
         this.velocity.set(0, 0, 0);
+        // Клавиши, нажатые до старта (в меню или оставшиеся от прошлой партии),
+        // не должны двигать персонажа с первого кадра.
+        this.keys.clear();
 
         this.player.position.set(0, 0, 0);
         this.player.rotation.y = 0;

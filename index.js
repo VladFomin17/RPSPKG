@@ -7,7 +7,7 @@ const drawer = new ZBufferDrawer(
     {initialZoom: 22}
 );
 
-document.querySelector('#title').textContent = 'Лабораторная работа №4 — ваша фигура и Z-буфер';
+document.querySelector('#title').textContent = 'Лабораторная работа №4 — Z-буфер';
 
 const actions = {
     reset: () => drawer.reset(),

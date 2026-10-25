@@ -17,7 +17,6 @@ const sources = {
 
 const state = {
     repeat: 0.16,
-    anisotropy: Math.min(8, maxAnisotropy),
     nearest: false,
     rotating: false
 };
@@ -47,7 +46,7 @@ lights.ambient.intensity = 0.5;
 function applyTextureSettings() {
     for (const texture of Object.values(sources)) {
         texture.repeat.set(state.repeat, state.repeat);
-        texture.anisotropy = state.anisotropy;
+        texture.anisotropy = maxAnisotropy;
         texture.magFilter = state.nearest ? THREE.NearestFilter : THREE.LinearFilter;
         texture.needsUpdate = true;
     }
@@ -88,11 +87,6 @@ function bindCheckbox(id, apply) {
     return input;
 }
 
-const anisotropyInput = document.querySelector('#anisotropy');
-anisotropyInput.max = String(maxAnisotropy);
-anisotropyInput.value = String(Math.min(8, maxAnisotropy));
-document.querySelector('output[data-for="anisotropy"]').value = anisotropyInput.value;
-
 document.querySelector('#textureSwitch').addEventListener('click', event => {
     const button = event.target.closest('[data-texture]');
     if (button) {
@@ -102,11 +96,6 @@ document.querySelector('#textureSwitch').addEventListener('click', event => {
 
 bindRange('repeat', value => {
     state.repeat = value;
-    applyTextureSettings();
-});
-
-bindRange('anisotropy', value => {
-    state.anisotropy = value;
     applyTextureSettings();
 });
 
@@ -135,7 +124,7 @@ document.querySelector('#textureFile').addEventListener('change', event => {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = state.anisotropy;
+        texture.anisotropy = maxAnisotropy;
         texture.repeat.set(state.repeat, state.repeat);
 
         if (sources.custom) {

@@ -23,30 +23,12 @@ function isDegenerate(points, a, b, c) {
 
 /**
  * Рисунок из лабораторной №4 превращается в BufferGeometry.
- *
- * smooth = false: вершины не общие, нормаль у каждого треугольника своя —
- * обход граней в исходной модели произвольный, а двусторонний материал
- * сам развернёт нормаль к камере.
- * smooth = true: вершины общие, нормали усредняются по смежным граням.
+ * Вершины не общие: нормаль у каждого треугольника своя, поэтому жёсткие
+ * рёбра сохраняются, а двусторонний материал сам развернёт нормаль к камере
+ * (обход граней в исходной модели произвольный).
  */
-export function characterGeometry(mesh = extrudeCharacter(4), options = {}) {
-    const smooth = options.smooth === true;
+export function characterGeometry(mesh = extrudeCharacter(4)) {
     const positions = [];
-    const indices = [];
-    const shared = new Map();
-
-    const vertex = index => {
-        if (!smooth) {
-            positions.push(...mesh.points[index]);
-            return positions.length / 3 - 1;
-        }
-
-        if (!shared.has(index)) {
-            shared.set(index, positions.length / 3);
-            positions.push(...mesh.points[index]);
-        }
-        return shared.get(index);
-    };
 
     for (const face of mesh.faces) {
         for (let i = 1; i < face.length - 1; i++) {
@@ -58,13 +40,12 @@ export function characterGeometry(mesh = extrudeCharacter(4), options = {}) {
                 continue;
             }
 
-            indices.push(vertex(a), vertex(b), vertex(c));
+            positions.push(...mesh.points[a], ...mesh.points[b], ...mesh.points[c]);
         }
     }
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setIndex(indices);
     geometry.computeVertexNormals();
     return geometry;
 }

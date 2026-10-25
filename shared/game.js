@@ -7,6 +7,8 @@ const ARENA_RADIUS = 30;
 const PLAYER_SPEED = 16;
 const PLAYER_SCALE = 0.45;
 const ENEMY_SPEED = 7;
+const ENEMY_RADIUS = 1.4;
+const SEPARATION = ENEMY_RADIUS * 2.4;
 const CRYSTAL_COUNT = 10;
 const MAX_ENEMIES = 5;
 const DEFAULT_ENEMIES = 3;
@@ -363,18 +365,110 @@ export class Game {
 
     updateEnemies(dt) {
         for (const enemy of this.enemies) {
+            if (!enemy.visible) {
+                continue;
+            }
+
             const dx = this.player.position.x - enemy.position.x;
             const dz = this.player.position.z - enemy.position.z;
             const distance = Math.hypot(dx, dz) || 1;
 
-            enemy.position.x += (dx / distance) * ENEMY_SPEED * dt;
-            enemy.position.z += (dz / distance) * ENEMY_SPEED * dt;
+            // Мягкое отталкивание от соседей: враги расходятся ещё до того,
+            // как наехали друг на друга, поэтому не выглядят одним пятном.
+            let steerX = 0;
+            let steerZ = 0;
+
+            for (const other of this.enemies) {
+                if (other === enemy || !other.visible) {
+                    continue;
+                }
+
+                const ox = enemy.position.x - other.position.x;
+                const oz = enemy.position.z - other.position.z;
+                const otherDistance = Math.hypot(ox, oz);
+
+                if (otherDistance > 1e-4 && otherDistance < SEPARATION * 1.6) {
+                    const weight = 1 - otherDistance / (SEPARATION * 1.6);
+                    steerX += (ox / otherDistance) * weight;
+                    steerZ += (oz / otherDistance) * weight;
+                }
+            }
+
+            const dirX = dx / distance + steerX * 1.2;
+            const dirZ = dz / distance + steerZ * 1.2;
+            const length = Math.hypot(dirX, dirZ) || 1;
+
+            enemy.position.x += (dirX / length) * ENEMY_SPEED * dt;
+            enemy.position.z += (dirZ / length) * ENEMY_SPEED * dt;
             enemy.position.y = 1.8 + Math.sin(this.elapsed * 3 + enemy.userData.phase) * 0.25;
             enemy.rotation.y += dt * 1.5;
+        }
+
+        this.separateEnemies();
+
+        for (const enemy of this.enemies) {
+            if (!enemy.visible) {
+                continue;
+            }
+
+            const distance = Math.hypot(
+                this.player.position.x - enemy.position.x,
+                this.player.position.z - enemy.position.z
+            );
 
             if (distance < 2.6) {
                 this.finish('lose');
                 return;
+            }
+        }
+    }
+
+    /** Жёсткая страховка: раздвигает пары, которые всё-таки перекрылись. */
+    separateEnemies() {
+        const active = this.enemies.filter(enemy => enemy.visible);
+
+        for (let i = 0; i < active.length; i++) {
+            for (let j = i + 1; j < active.length; j++) {
+                const first = active[i];
+                const second = active[j];
+
+                let dx = second.position.x - first.position.x;
+                let dz = second.position.z - first.position.z;
+                let distance = Math.hypot(dx, dz);
+
+                if (distance >= SEPARATION) {
+                    continue;
+                }
+
+                // Полное совпадение: направление выбираем случайно, иначе деление на ноль.
+                if (distance < 1e-4) {
+                    const angle = Math.random() * Math.PI * 2;
+                    dx = Math.cos(angle);
+                    dz = Math.sin(angle);
+                    distance = 1;
+                }
+
+                const push = (SEPARATION - distance) / 2;
+                const nx = dx / distance;
+                const nz = dz / distance;
+
+                first.position.x -= nx * push;
+                first.position.z -= nz * push;
+                second.position.x += nx * push;
+                second.position.z += nz * push;
+            }
+        }
+
+        // Расталкивание не должно вытолкнуть врага за кольцо арены.
+        const limit = ARENA_RADIUS - 2;
+
+        for (const enemy of active) {
+            const distance = Math.hypot(enemy.position.x, enemy.position.z);
+
+            if (distance > limit) {
+                const scale = limit / distance;
+                enemy.position.x *= scale;
+                enemy.position.z *= scale;
             }
         }
     }

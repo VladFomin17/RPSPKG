@@ -3,29 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Компьютерная графика — лабораторная работа</title>
+  <title>Лабораторная работа №5 — освещение</title>
   <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js",
+        "three/addons/": "./node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="app">
-    <h1 id="title">Лабораторная работа</h1>
-    <canvas id="canvas" width="1000" height="700"></canvas>
-    <section class="controls">
-      <button id="reset">Сбросить</button>
-      <button id="rotateLeft">Повернуть −</button>
-      <button id="rotateRight">Повернуть +</button>
-      <button id="rotateUp">Повернуть вверх</button>
-      <button id="rotateDown">Повернуть вниз</button>
-      <button id="rotateZLeft">Повернуть Z −</button>
-      <button id="rotateZRight">Повернуть Z +</button>
-      <button id="scaleDown">Масштаб −</button>
-      <button id="scaleUp">Масштаб +</button>
-      <button id="moveLeft">←</button><button id="moveRight">→</button>
-      <button id="moveUp">↑</button><button id="moveDown">↓</button>
-      <button id="moveZBack">Z−</button><button id="moveZForward">Z+</button>
-    </section>
+    <div id="viewport" class="viewport"></div>
+
+    <aside class="panel">
+      <header class="panel-head">
+        <h1>Лабораторная работа №5</h1>
+        <p class="subtitle">Освещение: Ламберт + Блин-Фонг, тени</p>
+      </header>
+
+      <section class="group">
+        <h2>Источники света</h2>
+
+        <label class="row">
+          <span>Основной</span>
+          <input id="keyIntensity" type="range" min="0" max="6" step="0.05" value="3.2" />
+          <output data-for="keyIntensity">3.2</output>
+        </label>
+
+        <label class="row color">
+          <span>Цвет</span>
+          <input id="keyColor" type="color" value="#fff1dc" />
+        </label>
+
+        <label class="row">
+          <span>Контровой</span>
+          <input id="rimIntensity" type="range" min="0" max="5" step="0.05" value="1.4" />
+          <output data-for="rimIntensity">1.4</output>
+        </label>
+
+        <label class="row color">
+          <span>Цвет</span>
+          <input id="rimColor" type="color" value="#6f9bff" />
+        </label>
+
+        <label class="row">
+          <span>Рассеянный</span>
+          <input id="ambientIntensity" type="range" min="0" max="2" step="0.05" value="0.55" />
+          <output data-for="ambientIntensity">0.55</output>
+        </label>
+      </section>
+
+      <section class="group">
+        <h2>Материал</h2>
+
+        <label class="row color">
+          <span>Цвет</span>
+          <input id="figureColor" type="color" value="#d64040" />
+        </label>
+
+        <label class="row">
+          <span>Шероховатость</span>
+          <input id="roughness" type="range" min="0" max="1" step="0.01" value="0.42" />
+          <output data-for="roughness">0.42</output>
+        </label>
+
+        <label class="row">
+          <span>Металличность</span>
+          <input id="metalness" type="range" min="0" max="1" step="0.01" value="0.08" />
+          <output data-for="metalness">0.08</output>
+        </label>
+      </section>
+
+      <section class="group">
+        <h2>Отображение</h2>
+
+        <label class="toggle">
+          <input id="smoothShading" type="checkbox" />
+          Сглаженные грани
+        </label>
+
+        <label class="toggle">
+          <input id="autoRotate" type="checkbox" />
+          Вращение
+        </label>
+
+        <label class="toggle">
+          <input id="wireframe" type="checkbox" />
+          Каркас
+        </label>
+
+        <label class="toggle">
+          <input id="showHelpers" type="checkbox" />
+          Источники света
+        </label>
+      </section>
+
+      <footer class="panel-foot">
+        <button id="reset" type="button">Сбросить</button>
+        <p class="hint">ЛКМ — вращение · колесо — масштаб · ПКМ — сдвиг</p>
+      </footer>
+    </aside>
   </main>
+
   <script type="module" src="index.js"></script>
 </body>
 </html>
-

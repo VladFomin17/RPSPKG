@@ -111,19 +111,44 @@ export const faceLoops2D = [
 
 export const holeLoops2D = [];
 
-// У этих вершин передняя и задняя грани ручки существуют,
-// но вертикальные соединяющие рёбра по оси Z не рисуются.
-const zDisconnectedPoints = new Set([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 67]);
+function loopArea(loop) {
+    let area = 0;
+    for (let i = 0; i < loop.length; i++) {
+        const [x1, y1] = points2D[loop[i]];
+        const [x2, y2] = points2D[loop[(i + 1) % loop.length]];
+        area += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(area) / 2;
+}
 
+// Контур с наибольшей площадью считаем силуэтом: всё, что лежит внутри него,
+// в трёхмерной модели скрыто телом, поэтому боковые грани у таких рёбер не нужны.
+const outerLoop = faceLoops2D.reduce(
+    (best, loop) => (loopArea(loop) > loopArea(best) ? loop : best)
+);
+
+const outerPoints = outerLoop.map(index => points2D[index]);
+const outerBox = {
+    minX: Math.min(...outerPoints.map(point => point[0])),
+    maxX: Math.max(...outerPoints.map(point => point[0])),
+    minY: Math.min(...outerPoints.map(point => point[1])),
+    maxY: Math.max(...outerPoints.map(point => point[1]))
+};
+
+const OUTER_MARGIN = 0.5;
+
+function isInternalPoint(index) {
+    const [x, y] = points2D[index];
+    return x > outerBox.minX + OUTER_MARGIN && x < outerBox.maxX - OUTER_MARGIN
+        && y > outerBox.minY + OUTER_MARGIN && y < outerBox.maxY - OUTER_MARGIN;
+}
+
+// Для двумерной отрисовки часть рёбер по Z не рисовалась, но в трёхмерной сцене
+// фигура должна быть сплошным телом: передняя плоскость z = +depth/2,
+// задняя z = -depth/2, боковые грани — по внешним рёбрам контура.
 export function extrudeCharacter(depth = 4) {
     const base = points2D.slice(1).map(([x, y]) => [x, y, depth / 2]);
-    const back = base.map(([x, y], index) => {
-        const pointNumber = index + 1;
-        const z = pointNumber >= 16 && pointNumber <= 43
-            ? depth / 2
-            : -depth / 2;
-        return [x, y, z];
-    });
+    const back = base.map(([x, y]) => [x, y, -depth / 2]);
     const points = [...base, ...back];
     const count = base.length;
     const edges = [];
@@ -133,19 +158,13 @@ export function extrudeCharacter(depth = 4) {
         edges.push([a - 1, b - 1]);
         edges.push([a - 1 + count, b - 1 + count]);
 
-        const hasZDisconnectedPoint =
-            zDisconnectedPoints.has(a) || zDisconnectedPoints.has(b);
-
-        if (!hasZDisconnectedPoint) {
+        if (!isInternalPoint(a) || !isInternalPoint(b)) {
             faces.push([a - 1, b - 1, b - 1 + count, a - 1 + count]);
         }
     }
 
     for (let i = 0; i < count; i++) {
-        const pointNumber = i + 1;
-        if (!zDisconnectedPoints.has(pointNumber)) {
-            edges.push([i, i + count]);
-        }
+        edges.push([i, i + count]);
     }
 
     for (const loop of faceLoops2D) {

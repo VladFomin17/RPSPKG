@@ -1,34 +1,71 @@
 import * as THREE from 'three';
 import {createView, addStudioLights, addGround, frameCamera} from './shared/scene.js';
-import {characterGeometry, characterMesh} from './shared/character.js';
+import {characterGeometry} from './shared/character.js';
+import {checkerTexture, brickTexture, tilesTexture, noiseTexture} from './shared/textures.js';
 
 const view = createView(document.querySelector('#viewport'));
-const {scene, camera, controls} = view;
+const {scene, camera, controls, renderer} = view;
 
-const flatGeometry = characterGeometry();
-const smoothGeometry = characterGeometry(undefined, {smooth: true});
+const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
 
-const character = characterMesh({geometry: flatGeometry});
-// Тень персонаж отбрасывает, но не принимает: его грани плоские и двусторонние,
-// а карта теней на таких поверхностях даёт самозатенение (акан).
+const sources = {
+    checker: checkerTexture(),
+    brick: brickTexture(),
+    tiles: tilesTexture(),
+    noise: noiseTexture()
+};
+
+const state = {
+    repeat: 0.16,
+    anisotropy: Math.min(8, maxAnisotropy),
+    nearest: false,
+    rotating: false
+};
+
+const material = new THREE.MeshStandardMaterial({
+    map: sources.checker,
+    roughness: 0.55,
+    metalness: 0.05,
+    side: THREE.DoubleSide
+});
+
+const character = new THREE.Mesh(characterGeometry(), material);
 character.castShadow = true;
 scene.add(character);
 
-const material = character.material;
 const bounds = new THREE.Box3().setFromObject(character);
-
 addGround(scene, bounds.min.y - 0.2);
 frameCamera(camera, controls, character);
 
 const lights = addStudioLights(scene);
+lights.key.color.set(0xffffff);
+lights.key.intensity = 2.8;
+lights.rim.intensity = 0.55;
+lights.ambient.intensity = 0.5;
 
-const keyHelper = new THREE.DirectionalLightHelper(lights.key, 9, 0xffd7a3);
-const rimHelper = new THREE.DirectionalLightHelper(lights.rim, 9, 0x8fb2ff);
-keyHelper.visible = false;
-rimHelper.visible = false;
-scene.add(keyHelper, rimHelper);
+function applyTextureSettings() {
+    for (const texture of Object.values(sources)) {
+        texture.repeat.set(state.repeat, state.repeat);
+        texture.anisotropy = state.anisotropy;
+        texture.magFilter = state.nearest ? THREE.NearestFilter : THREE.LinearFilter;
+        texture.needsUpdate = true;
+    }
+}
 
-let rotating = false;
+function setTexture(name) {
+    if (!sources[name]) {
+        return;
+    }
+
+    material.map = sources[name];
+    material.needsUpdate = true;
+
+    for (const button of document.querySelectorAll('[data-texture]')) {
+        button.classList.toggle('active', button.dataset.texture === name);
+    }
+
+    applyTextureSettings();
+}
 
 function bindRange(id, apply) {
     const input = document.querySelector(`#${id}`);
@@ -42,14 +79,6 @@ function bindRange(id, apply) {
     return input;
 }
 
-function bindColor(id, apply) {
-    const input = document.querySelector(`#${id}`);
-    const update = () => apply(new THREE.Color(input.value));
-    input.addEventListener('input', update);
-    update();
-    return input;
-}
-
 function bindCheckbox(id, apply) {
     const input = document.querySelector(`#${id}`);
     const update = () => apply(input.checked);
@@ -58,53 +87,64 @@ function bindCheckbox(id, apply) {
     return input;
 }
 
-bindRange('keyIntensity', value => {
-    lights.key.intensity = value;
+const anisotropyInput = document.querySelector('#anisotropy');
+anisotropyInput.max = String(maxAnisotropy);
+anisotropyInput.value = String(Math.min(8, maxAnisotropy));
+document.querySelector('output[data-for="anisotropy"]').value = anisotropyInput.value;
+
+document.querySelector('#textureSwitch').addEventListener('click', event => {
+    const button = event.target.closest('[data-texture]');
+    if (button) {
+        setTexture(button.dataset.texture);
+    }
 });
 
-bindRange('rimIntensity', value => {
-    lights.rim.intensity = value;
+bindRange('repeat', value => {
+    state.repeat = value;
+    applyTextureSettings();
 });
 
-bindRange('ambientIntensity', value => {
-    lights.ambient.intensity = value;
+bindRange('anisotropy', value => {
+    state.anisotropy = value;
+    applyTextureSettings();
 });
 
 bindRange('roughness', value => {
     material.roughness = value;
 });
 
-bindRange('metalness', value => {
-    material.metalness = value;
-});
-
-bindColor('keyColor', color => {
-    lights.key.color.copy(color);
-});
-
-bindColor('rimColor', color => {
-    lights.rim.color.copy(color);
-});
-
-bindColor('figureColor', color => {
-    material.color.copy(color);
-});
-
-bindCheckbox('smoothShading', value => {
-    character.geometry = value ? smoothGeometry : flatGeometry;
+bindCheckbox('nearest', value => {
+    state.nearest = value;
+    applyTextureSettings();
 });
 
 bindCheckbox('autoRotate', value => {
-    rotating = value;
+    state.rotating = value;
 });
 
-bindCheckbox('wireframe', value => {
-    material.wireframe = value;
-});
+document.querySelector('#textureFile').addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (!file) {
+        return;
+    }
 
-bindCheckbox('showHelpers', value => {
-    keyHelper.visible = value;
-    rimHelper.visible = value;
+    const url = URL.createObjectURL(file);
+
+    new THREE.TextureLoader().load(url, texture => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = state.anisotropy;
+        texture.repeat.set(state.repeat, state.repeat);
+
+        if (sources.custom) {
+            sources.custom.dispose();
+        }
+
+        sources.custom = texture;
+        URL.revokeObjectURL(url);
+        setTexture('custom');
+    });
 });
 
 document.querySelector('#reset').addEventListener('click', () => {
@@ -112,15 +152,21 @@ document.querySelector('#reset').addEventListener('click', () => {
         if (input.type === 'checkbox') {
             input.checked = input.defaultChecked;
             input.dispatchEvent(new Event('change'));
-        } else {
+        } else if (input.type !== 'file') {
             input.value = input.defaultValue;
             input.dispatchEvent(new Event('input'));
         }
     }
+
+    document.querySelector('#textureFile').value = '';
+    setTexture('checker');
 });
 
+applyTextureSettings();
+setTexture('checker');
+
 view.onFrame(dt => {
-    if (rotating) {
+    if (state.rotating) {
         character.rotation.y += dt * 0.5;
     }
 });

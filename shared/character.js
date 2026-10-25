@@ -22,31 +22,55 @@ function isDegenerate(points, a, b, c) {
 }
 
 /**
- * Рисунок из лабораторной №4 превращается в BufferGeometry.
- *
- * smooth = false: вершины не общие, нормаль у каждого треугольника своя —
- * обход граней в исходной модели произвольный, а двусторонний материал
- * сам развернёт нормаль к камере.
- * smooth = true: вершины общие, нормали усредняются по смежным граням.
+ * Проекционная (box) развёртка: для каждого треугольника выбирается ось
+ * по доминирующей компоненте нормали, а UV берутся из двух других координат.
+ * Для выдавленной фигуры это даёт непрерывную картинку на передней грани.
  */
-export function characterGeometry(mesh = extrudeCharacter(4), options = {}) {
-    const smooth = options.smooth === true;
+function applyBoxUVs(geometry) {
+    const position = geometry.getAttribute('position');
+    const uv = new Float32Array(position.count * 2);
+
+    for (let i = 0; i < position.count; i += 3) {
+        const ax = position.getX(i);
+        const ay = position.getY(i);
+        const az = position.getZ(i);
+
+        const ux = position.getX(i + 1) - ax;
+        const uy = position.getY(i + 1) - ay;
+        const uz = position.getZ(i + 1) - az;
+
+        const vx = position.getX(i + 2) - ax;
+        const vy = position.getY(i + 2) - ay;
+        const vz = position.getZ(i + 2) - az;
+
+        const nx = Math.abs(uy * vz - uz * vy);
+        const ny = Math.abs(uz * vx - ux * vz);
+        const nz = Math.abs(ux * vy - uy * vx);
+
+        const axis = nz >= nx && nz >= ny ? 'z' : ny >= nx ? 'y' : 'x';
+
+        for (let k = 0; k < 3; k++) {
+            const x = position.getX(i + k);
+            const y = position.getY(i + k);
+            const z = position.getZ(i + k);
+
+            const u = axis === 'z' ? x : axis === 'y' ? x : z;
+            const v = axis === 'z' ? y : axis === 'y' ? z : y;
+
+            uv[(i + k) * 2] = u;
+            uv[(i + k) * 2 + 1] = v;
+        }
+    }
+
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+}
+
+/**
+ * Рисунок из лабораторной №4: треугольники без общих вершин (нормаль у каждого
+ * своя) и UV-развёртка в мировых единицах. Масштаб текстуры задаётся через repeat.
+ */
+export function characterGeometry(mesh = extrudeCharacter(4)) {
     const positions = [];
-    const indices = [];
-    const shared = new Map();
-
-    const vertex = index => {
-        if (!smooth) {
-            positions.push(...mesh.points[index]);
-            return positions.length / 3 - 1;
-        }
-
-        if (!shared.has(index)) {
-            shared.set(index, positions.length / 3);
-            positions.push(...mesh.points[index]);
-        }
-        return shared.get(index);
-    };
 
     for (const face of mesh.faces) {
         for (let i = 1; i < face.length - 1; i++) {
@@ -58,25 +82,13 @@ export function characterGeometry(mesh = extrudeCharacter(4), options = {}) {
                 continue;
             }
 
-            indices.push(vertex(a), vertex(b), vertex(c));
+            positions.push(...mesh.points[a], ...mesh.points[b], ...mesh.points[c]);
         }
     }
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setIndex(indices);
+    applyBoxUVs(geometry);
     geometry.computeVertexNormals();
     return geometry;
-}
-
-export function characterMesh(options = {}) {
-    const material = new THREE.MeshStandardMaterial({
-        color: options.color ?? 0xd64040,
-        roughness: options.roughness ?? 0.42,
-        metalness: options.metalness ?? 0.08,
-        flatShading: false,
-        side: THREE.DoubleSide
-    });
-
-    return new THREE.Mesh(options.geometry ?? characterGeometry(), material);
 }

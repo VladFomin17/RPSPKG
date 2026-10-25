@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {extrudeCharacter} from '../scripts/CharacterModel3D.js';
+import {extrudeCharacter, points2D, edges2D} from '../scripts/CharacterModel3D.js';
 
 const range = (from, to) => Array.from({length: to - from + 1}, (_, index) => from + index);
 
@@ -42,6 +42,45 @@ function pushTriangle(positions, points, pivot, a, b, c) {
             points[index][2] - pivot[2]
         );
     }
+}
+
+/**
+ * Контурные линии рисунка для одной части: в лабораторной №4 это были
+ * чёрные линии поверх заливки, поэтому глаза, рот и детали возвращаются
+ * как линии на передней и задней плоскостях.
+ */
+const OUTLINE_MATERIAL = new THREE.LineBasicMaterial({
+    color: 0x111827,
+    transparent: true,
+    opacity: 0.9
+});
+
+function partOutline(part, depth = 4) {
+    const indices = new Set(part.indices);
+    const zFront = depth / 2 + 0.012;
+    const zBack = -depth / 2 - 0.012;
+    const positions = [];
+
+    for (const [a, b] of edges2D) {
+        if (!indices.has(a - 1) || !indices.has(b - 1)) {
+            continue;
+        }
+
+        for (const z of [zFront, zBack]) {
+            positions.push(
+                points2D[a][0] - part.pivot[0],
+                points2D[a][1] - part.pivot[1],
+                z - part.pivot[2],
+                points2D[b][0] - part.pivot[0],
+                points2D[b][1] - part.pivot[1],
+                z - part.pivot[2]
+            );
+        }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    return new THREE.LineSegments(geometry, OUTLINE_MATERIAL);
 }
 
 /**
@@ -94,6 +133,7 @@ export function buildCharacter(mesh = extrudeCharacter(4)) {
         partMesh.castShadow = true;
 
         group.add(partMesh);
+        group.add(partOutline(part));
         root.add(group);
         groups[part.name] = group;
     }

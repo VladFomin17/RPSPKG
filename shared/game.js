@@ -6,7 +6,7 @@ import {Walker} from './animation.js';
 const ARENA_RADIUS = 30;
 const PLAYER_SPEED = 16;
 const PLAYER_SCALE = 0.45;
-const ENEMY_SPEED = 10.5;
+const ENEMY_SPEED = 7;
 const CRYSTAL_COUNT = 10;
 const MAX_ENEMIES = 5;
 const DEFAULT_ENEMIES = 3;

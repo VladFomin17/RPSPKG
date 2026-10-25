@@ -1,126 +1,79 @@
 import * as THREE from 'three';
 import {createView, addStudioLights, addGround, frameCamera} from './shared/scene.js';
-import {characterGeometry, characterMesh} from './shared/character.js';
+import {buildCharacter} from './shared/character.js';
+import {Walker} from './shared/animation.js';
 
 const view = createView(document.querySelector('#viewport'));
 const {scene, camera, controls} = view;
 
-const flatGeometry = characterGeometry();
-const smoothGeometry = characterGeometry(undefined, {smooth: true});
+const rig = buildCharacter();
+scene.add(rig.root);
 
-const character = characterMesh({geometry: flatGeometry});
-// Тень персонаж отбрасывает, но не принимает: его грани плоские и двусторонние,
-// а карта теней на таких поверхностях даёт самозатенение (акан).
-character.castShadow = true;
-scene.add(character);
+const walker = new Walker(rig);
 
-const material = character.material;
-const bounds = new THREE.Box3().setFromObject(character);
-
+const bounds = new THREE.Box3().setFromObject(rig.root);
 addGround(scene, bounds.min.y - 0.2);
-frameCamera(camera, controls, character);
+frameCamera(camera, controls, rig.root);
 
-const lights = addStudioLights(scene);
+addStudioLights(scene);
 
-const keyHelper = new THREE.DirectionalLightHelper(lights.key, 9, 0xffd7a3);
-const rimHelper = new THREE.DirectionalLightHelper(lights.rim, 9, 0x8fb2ff);
-keyHelper.visible = false;
-rimHelper.visible = false;
-scene.add(keyHelper, rimHelper);
-
-let rotating = false;
-
-function bindRange(id, apply) {
-    const input = document.querySelector(`#${id}`);
-    const output = document.querySelector(`output[data-for="${id}"]`);
-    const update = () => {
-        output.value = input.value;
-        apply(Number(input.value));
-    };
-    input.addEventListener('input', update);
-    update();
-    return input;
+const pivotHelpers = [];
+for (const group of Object.values(rig.groups)) {
+    const helper = new THREE.AxesHelper(4);
+    helper.material.depthTest = false;
+    helper.material.transparent = true;
+    helper.visible = false;
+    group.add(helper);
+    pivotHelpers.push(helper);
 }
 
-function bindColor(id, apply) {
-    const input = document.querySelector(`#${id}`);
-    const update = () => apply(new THREE.Color(input.value));
-    input.addEventListener('input', update);
-    update();
-    return input;
+const modeButtons = [...document.querySelectorAll('[data-mode]')];
+
+function setMode(mode) {
+    walker.setMode(mode);
+    for (const button of modeButtons) {
+        button.classList.toggle('active', button.dataset.mode === mode);
+    }
 }
 
-function bindCheckbox(id, apply) {
-    const input = document.querySelector(`#${id}`);
-    const update = () => apply(input.checked);
-    input.addEventListener('change', update);
-    update();
-    return input;
-}
-
-bindRange('keyIntensity', value => {
-    lights.key.intensity = value;
+document.querySelector('#modeSwitch').addEventListener('click', event => {
+    const button = event.target.closest('[data-mode]');
+    if (button) {
+        setMode(button.dataset.mode);
+    }
 });
 
-bindRange('rimIntensity', value => {
-    lights.rim.intensity = value;
+const speedInput = document.querySelector('#speed');
+const speedOutput = document.querySelector('output[data-for="speed"]');
+
+speedInput.addEventListener('input', () => {
+    speedOutput.value = speedInput.value;
+    walker.setSpeed(Number(speedInput.value));
 });
 
-bindRange('ambientIntensity', value => {
-    lights.ambient.intensity = value;
-});
-
-bindRange('roughness', value => {
-    material.roughness = value;
-});
-
-bindRange('metalness', value => {
-    material.metalness = value;
-});
-
-bindColor('keyColor', color => {
-    lights.key.color.copy(color);
-});
-
-bindColor('rimColor', color => {
-    lights.rim.color.copy(color);
-});
-
-bindColor('figureColor', color => {
-    material.color.copy(color);
-});
-
-bindCheckbox('smoothShading', value => {
-    character.geometry = value ? smoothGeometry : flatGeometry;
-});
-
-bindCheckbox('autoRotate', value => {
-    rotating = value;
-});
-
-bindCheckbox('wireframe', value => {
-    material.wireframe = value;
-});
-
-bindCheckbox('showHelpers', value => {
-    keyHelper.visible = value;
-    rimHelper.visible = value;
+document.querySelector('#showPivots').addEventListener('change', event => {
+    for (const helper of pivotHelpers) {
+        helper.visible = event.target.checked;
+    }
 });
 
 document.querySelector('#reset').addEventListener('click', () => {
-    for (const input of document.querySelectorAll('.panel input')) {
-        if (input.type === 'checkbox') {
-            input.checked = input.defaultChecked;
-            input.dispatchEvent(new Event('change'));
-        } else {
-            input.value = input.defaultValue;
-            input.dispatchEvent(new Event('input'));
-        }
+    speedInput.value = speedInput.defaultValue;
+    speedOutput.value = speedInput.value;
+    walker.setSpeed(Number(speedInput.value));
+    walker.time = 0;
+
+    document.querySelector('#showPivots').checked = false;
+    for (const helper of pivotHelpers) {
+        helper.visible = false;
     }
+
+    setMode('idle');
 });
 
 view.onFrame(dt => {
-    if (rotating) {
-        character.rotation.y += dt * 0.5;
-    }
+    walker.update(dt);
 });
+
+const initialMode = new URLSearchParams(location.search).get('mode');
+setMode(['idle', 'walk', 'run'].includes(initialMode) ? initialMode : 'idle');

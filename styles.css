@@ -168,3 +168,21 @@ button:active {
         border-top: 1px solid #1d2434;
     }
 }
+
+.segment {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.segment button {
+    padding: 8px;
+    font-size: 12px;
+    background: #1a2234;
+    border-color: #2a3348;
+}
+
+.segment button.active {
+    background: #2c4370;
+    border-color: #4f8cff;
+}

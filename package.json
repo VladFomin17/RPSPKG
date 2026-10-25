@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check index.js && node --check shared/scene.js && node --check shared/character.js"
+    "check": "node --check index.js && node --check shared/scene.js && node --check shared/character.js && node --check shared/animation.js"
   },
   "dependencies": {
     "three": "^0.186.1"

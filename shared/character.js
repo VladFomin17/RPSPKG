@@ -1,7 +1,20 @@
 import * as THREE from 'three';
 import {extrudeCharacter} from '../scripts/CharacterModel3D.js';
 
-/** Площадь треугольника меньше порога — грань вырождена (в модели такие есть). */
+const range = (from, to) => Array.from({length: to - from + 1}, (_, index) => from + index);
+
+/**
+ * Части фигуры — это связные блоки исходных точек (см. points2D).
+ * Для каждой части задан шарнир: поворот выполняется вокруг него.
+ */
+const PARTS = [
+    {name: 'body', indices: [...range(0, 42), 66], pivot: [0, 0, 0]},
+    {name: 'leftArm', indices: range(43, 48), pivot: [-5, 4, 0]},
+    {name: 'rightArm', indices: range(49, 54), pivot: [5, 4, 0]},
+    {name: 'leftLeg', indices: range(55, 60), pivot: [-2, -3, 0]},
+    {name: 'rightLeg', indices: [...range(61, 65), 67], pivot: [2, -3, 0]}
+];
+
 function isDegenerate(points, a, b, c) {
     const [ax, ay, az] = points[a];
     const [bx, by, bz] = points[b];
@@ -21,62 +34,69 @@ function isDegenerate(points, a, b, c) {
     return nx * nx + ny * ny + nz * nz < 1e-8;
 }
 
-/**
- * Рисунок из лабораторной №4 превращается в BufferGeometry.
- *
- * smooth = false: вершины не общие, нормаль у каждого треугольника своя —
- * обход граней в исходной модели произвольный, а двусторонний материал
- * сам развернёт нормаль к камере.
- * smooth = true: вершины общие, нормали усредняются по смежным граням.
- */
-export function characterGeometry(mesh = extrudeCharacter(4), options = {}) {
-    const smooth = options.smooth === true;
-    const positions = [];
-    const indices = [];
-    const shared = new Map();
-
-    const vertex = index => {
-        if (!smooth) {
-            positions.push(...mesh.points[index]);
-            return positions.length / 3 - 1;
-        }
-
-        if (!shared.has(index)) {
-            shared.set(index, positions.length / 3);
-            positions.push(...mesh.points[index]);
-        }
-        return shared.get(index);
-    };
-
-    for (const face of mesh.faces) {
-        for (let i = 1; i < face.length - 1; i++) {
-            const a = face[0];
-            const b = face[i];
-            const c = face[i + 1];
-
-            if (isDegenerate(mesh.points, a, b, c)) {
-                continue;
-            }
-
-            indices.push(vertex(a), vertex(b), vertex(c));
-        }
+function pushTriangle(positions, points, pivot, a, b, c) {
+    for (const index of [a, b, c]) {
+        positions.push(
+            points[index][0] - pivot[0],
+            points[index][1] - pivot[1],
+            points[index][2] - pivot[2]
+        );
     }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    return geometry;
 }
 
-export function characterMesh(options = {}) {
+/**
+ * Фигура собирается из отдельных групп: корпус, две руки, две ноги.
+ * Геометрия каждой группы сдвинута так, что её начало координат — шарнир.
+ */
+export function buildCharacter(mesh = extrudeCharacter(4)) {
+    const count = mesh.points.length / 2;
+    const root = new THREE.Group();
+    const groups = {};
+
     const material = new THREE.MeshStandardMaterial({
-        color: options.color ?? 0xd64040,
-        roughness: options.roughness ?? 0.42,
-        metalness: options.metalness ?? 0.08,
-        flatShading: false,
+        color: 0xd64040,
+        roughness: 0.45,
+        metalness: 0.08,
         side: THREE.DoubleSide
     });
 
-    return new THREE.Mesh(options.geometry ?? characterGeometry(), material);
+    for (const part of PARTS) {
+        const indices = new Set(part.indices);
+        const positions = [];
+
+        for (const face of mesh.faces) {
+            if (!indices.has(face[0] % count)) {
+                continue;
+            }
+
+            for (let i = 1; i < face.length - 1; i++) {
+                const a = face[0];
+                const b = face[i];
+                const c = face[i + 1];
+
+                if (isDegenerate(mesh.points, a, b, c)) {
+                    continue;
+                }
+
+                pushTriangle(positions, mesh.points, part.pivot, a, b, c);
+            }
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.computeVertexNormals();
+
+        const group = new THREE.Group();
+        group.name = part.name;
+        group.position.set(...part.pivot);
+
+        const partMesh = new THREE.Mesh(geometry, material);
+        partMesh.castShadow = true;
+
+        group.add(partMesh);
+        root.add(group);
+        groups[part.name] = group;
+    }
+
+    return {root, groups, material};
 }

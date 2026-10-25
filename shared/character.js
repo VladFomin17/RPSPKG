@@ -58,7 +58,6 @@ const OUTLINE_MATERIAL = new THREE.LineBasicMaterial({
 function partOutline(part, depth = 4) {
     const indices = new Set(part.indices);
     const zFront = depth / 2 + 0.012;
-    const zBack = -depth / 2 - 0.012;
     const positions = [];
 
     for (const [a, b] of edges2D) {
@@ -66,16 +65,14 @@ function partOutline(part, depth = 4) {
             continue;
         }
 
-        for (const z of [zFront, zBack]) {
-            positions.push(
-                points2D[a][0] - part.pivot[0],
-                points2D[a][1] - part.pivot[1],
-                z - part.pivot[2],
-                points2D[b][0] - part.pivot[0],
-                points2D[b][1] - part.pivot[1],
-                z - part.pivot[2]
-            );
-        }
+        positions.push(
+            points2D[a][0] - part.pivot[0],
+            points2D[a][1] - part.pivot[1],
+            zFront - part.pivot[2],
+            points2D[b][0] - part.pivot[0],
+            points2D[b][1] - part.pivot[1],
+            zFront - part.pivot[2]
+        );
     }
 
     const geometry = new THREE.BufferGeometry();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Лабораторная работа №7 — анимация</title>
+  <title>Лабораторная работа №8 — игра</title>
   <link rel="stylesheet" href="styles.css" />
   <script type="importmap">
     {
@@ -15,49 +15,33 @@
   </script>
 </head>
 <body>
-  <main class="app">
+  <main class="stage">
     <div id="viewport" class="viewport"></div>
 
-    <aside class="panel">
-      <header class="panel-head">
-        <h1>Лабораторная работа №7</h1>
-        <p class="subtitle">Анимация: скелет из частей и цикл движения</p>
-      </header>
+    <div class="hud">
+      <div class="stat">
+        <span>Кристаллы</span>
+        <strong id="score">0 / 10</strong>
+      </div>
+      <div class="stat">
+        <span>Время</span>
+        <strong id="time">60.0</strong>
+      </div>
+    </div>
 
-      <section class="group">
-        <h2>Режим</h2>
+    <div class="hint-bar">WASD — бег · мышь — камера · Enter — старт</div>
 
-        <div class="segment" id="modeSwitch">
-          <button type="button" data-mode="idle" class="active">Покой</button>
-          <button type="button" data-mode="walk">Ходьба</button>
-          <button type="button" data-mode="run">Бег</button>
-        </div>
-      </section>
-
-      <section class="group">
-        <h2>Параметры</h2>
-
-        <label class="row">
-          <span>Скорость</span>
-          <input id="speed" type="range" min="0.3" max="2" step="0.05" value="1" />
-          <output data-for="speed">1</output>
-        </label>
-      </section>
-
-      <section class="group">
-        <h2>Отображение</h2>
-
-        <label class="toggle">
-          <input id="showPivots" type="checkbox" />
-          Показать шарниры
-        </label>
-      </section>
-
-      <footer class="panel-foot">
-        <button id="reset" type="button">Сбросить</button>
-        <p class="hint">ЛКМ — вращение · колесо — масштаб · ПКМ — сдвиг</p>
-      </footer>
-    </aside>
+    <div id="overlay" class="overlay">
+      <div class="card">
+        <p class="eyebrow">Лабораторная работа №8</p>
+        <h1 id="overlayTitle">Собери 10 кристаллов</h1>
+        <p id="overlayText">
+          WASD — движение, перетаскивание мышью — камера.
+          Красные сферы догоняют: касание — поражение.
+        </p>
+        <button id="startButton" type="button">Играть</button>
+      </div>
+    </div>
   </main>
 
   <script type="module" src="index.js"></script>

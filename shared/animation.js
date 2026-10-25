@@ -7,11 +7,12 @@ const RATES = {idle: 1.6, walk: 6, run: 9};
  * догоняют цели через damp — поэтому переключение режимов происходит плавно.
  */
 export class Walker {
-    constructor(rig) {
+    constructor(rig, options = {}) {
         this.rig = rig;
         this.mode = 'idle';
         this.speed = 1;
         this.time = 0;
+        this.baseY = options.baseY ?? 0;
 
         this.pose = {leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0};
         this.bob = 0;
@@ -74,7 +75,7 @@ export class Walker {
         groups.leftLeg.rotation.x = this.pose.leftLeg;
         groups.rightLeg.rotation.x = this.pose.rightLeg;
 
-        this.rig.root.position.y = this.bob;
+        this.rig.root.position.y = this.baseY + this.bob;
         this.rig.root.rotation.x = this.lean;
     }
 }

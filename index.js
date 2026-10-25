@@ -1,79 +1,49 @@
-import * as THREE from 'three';
-import {createView, addStudioLights, addGround, frameCamera} from './shared/scene.js';
-import {buildCharacter} from './shared/character.js';
-import {Walker} from './shared/animation.js';
+import {createView} from './shared/scene.js';
+import {Game} from './shared/game.js';
 
-const view = createView(document.querySelector('#viewport'));
-const {scene, camera, controls} = view;
+const view = createView(document.querySelector('#viewport'), {
+    orbit: false,
+    background: 0x070b14,
+    fogNear: 60,
+    fogFar: 220,
+    exposure: 1.1
+});
 
-const rig = buildCharacter();
-scene.add(rig.root);
+const overlay = document.querySelector('#overlay');
+const overlayTitle = document.querySelector('#overlayTitle');
+const overlayText = document.querySelector('#overlayText');
+const startButton = document.querySelector('#startButton');
+const scoreElement = document.querySelector('#score');
+const timeElement = document.querySelector('#time');
 
-const walker = new Walker(rig);
+const game = new Game(view, {
+    onState(state) {
+        if (state === 'play') {
+            overlay.classList.add('hidden');
+            return;
+        }
 
-const bounds = new THREE.Box3().setFromObject(rig.root);
-addGround(scene, bounds.min.y - 0.2);
-frameCamera(camera, controls, rig.root);
+        const won = state === 'win';
 
-addStudioLights(scene);
+        overlayTitle.textContent = won ? 'Победа' : 'Поражение';
+        overlayText.textContent = won
+            ? 'Все кристаллы собраны. Попробуйте собрать быстрее.'
+            : 'Сфера догнала или вышло время. Попробуйте ещё раз.';
+        startButton.textContent = 'Ещё раз';
 
-const pivotHelpers = [];
-for (const group of Object.values(rig.groups)) {
-    const helper = new THREE.AxesHelper(4);
-    helper.material.depthTest = false;
-    helper.material.transparent = true;
-    helper.visible = false;
-    group.add(helper);
-    pivotHelpers.push(helper);
+        overlay.classList.remove('hidden');
+    },
+
+    onHud({score, time}) {
+        scoreElement.textContent = `${score} / 10`;
+        timeElement.textContent = time.toFixed(1);
+    }
+});
+
+startButton.addEventListener('click', () => {
+    game.start();
+});
+
+if (new URLSearchParams(location.search).has('play')) {
+    game.start();
 }
-
-const modeButtons = [...document.querySelectorAll('[data-mode]')];
-
-function setMode(mode) {
-    walker.setMode(mode);
-    for (const button of modeButtons) {
-        button.classList.toggle('active', button.dataset.mode === mode);
-    }
-}
-
-document.querySelector('#modeSwitch').addEventListener('click', event => {
-    const button = event.target.closest('[data-mode]');
-    if (button) {
-        setMode(button.dataset.mode);
-    }
-});
-
-const speedInput = document.querySelector('#speed');
-const speedOutput = document.querySelector('output[data-for="speed"]');
-
-speedInput.addEventListener('input', () => {
-    speedOutput.value = speedInput.value;
-    walker.setSpeed(Number(speedInput.value));
-});
-
-document.querySelector('#showPivots').addEventListener('change', event => {
-    for (const helper of pivotHelpers) {
-        helper.visible = event.target.checked;
-    }
-});
-
-document.querySelector('#reset').addEventListener('click', () => {
-    speedInput.value = speedInput.defaultValue;
-    speedOutput.value = speedInput.value;
-    walker.setSpeed(Number(speedInput.value));
-    walker.time = 0;
-
-    document.querySelector('#showPivots').checked = false;
-    for (const helper of pivotHelpers) {
-        helper.visible = false;
-    }
-
-    setMode('idle');
-});
-
-view.onFrame(dt => {
-    walker.update(dt);
-});
-
-const initialMode = new URLSearchParams(location.search).get('mode');
-setMode(['idle', 'walk', 'run'].includes(initialMode) ? initialMode : 'idle');
